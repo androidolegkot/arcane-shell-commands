@@ -134,7 +134,9 @@
     trigger.addEventListener('pointerenter', openMainMenu);
     trigger.addEventListener('focus', openMainMenu);
     trigger.addEventListener('click', openMainMenu);
-    root.addEventListener('pointerleave', scheduleClose);
+    root.addEventListener('pointerleave', event => {
+      if (!root.contains(event.relatedTarget)) scheduleClose();
+    });
     root.addEventListener('pointerenter', cancelScheduledClose);
 
     menu = document.createElement('div');
