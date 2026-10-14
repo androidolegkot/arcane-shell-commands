@@ -65,7 +65,7 @@
     style.textContent = `
       #${ROOT_ID} { position: relative; display: inline-flex; font: inherit; z-index: 1000; }
       #${ROOT_ID} .asc-popup { position: absolute; top: calc(100% + 6px); left: 0; }
-      #${ROOT_ID} .asc-popup.asc-level { top: 0; left: calc(100% - 2px); }
+      #${ROOT_ID} .asc-popup.asc-level { position: fixed; top: 0; left: 0; max-height: 65vh; }
       #${ROOT_ID} .asc-item { white-space: nowrap; }
       #${ROOT_ID} .asc-item[aria-haspopup="true"]::after { content: "›"; margin-left: auto; padding-left: 14px; }
       #${ROOT_ID} button { font: inherit; cursor: pointer; }
@@ -204,10 +204,10 @@
     if (!menu) return;
     menu.replaceChildren();
     for (const [label, mode] of [['Insert', 'insert'], ['Execute', 'execute']]) {
-      const item = addMenuItem(menu, label, () => openCommandTree(mode));
+      const item = addMenuItem(menu, label, () => openCommandTree(mode, item));
       item.setAttribute('aria-haspopup', 'true');
-      item.addEventListener('pointerenter', () => openCommandTree(mode));
-      item.addEventListener('focus', () => openCommandTree(mode));
+      item.addEventListener('pointerenter', () => openCommandTree(mode, item));
+      item.addEventListener('focus', () => openCommandTree(mode, item));
     }
     const separator = document.createElement('div');
     separator.className = 'asc-separator';
@@ -224,15 +224,40 @@
     return current;
   }
 
-  function openCommandTree(mode) {
+  function positionSubmenu(panel, anchor) {
+    const rect = anchor.getBoundingClientRect();
+    panel.style.left = Math.min(rect.right - 2, window.innerWidth - 210) + 'px';
+    panel.style.top = Math.max(4, Math.min(rect.top, window.innerHeight - 100)) + 'px';
+  }
+
+  function openCommandTree(mode, anchor) {
     activeMode = mode;
     clearSubmenus();
     const panel = document.createElement('div');
     panel.className = 'asc-popup asc-level';
     panel.hidden = false;
-    menu.appendChild(panel);
+    root.appendChild(panel);
     submenu = panel;
+    positionSubmenu(panel, anchor);
     renderCommandTree(panel, []);
+  }
+
+  function openFolder(panel, path, name, anchor) {
+    clearSubmenusAfter(panel);
+    const child = document.createElement('div');
+    child.className = 'asc-popup asc-level';
+    child.hidden = false;
+    root.appendChild(child);
+    submenu = child;
+    positionSubmenu(child, anchor);
+    renderCommandTree(child, [...path, name]);
+  }
+
+  function clearSubmenusAfter(panel) {
+    const panels = [...root.querySelectorAll('.asc-level')];
+    const index = panels.indexOf(panel);
+    panels.slice(index + 1).forEach(el => el.remove());
+    submenu = panel;
   }
 
   function renderCommandTree(panel, path) {
@@ -248,17 +273,10 @@
 
     for (const [name, value] of Object.entries(current)) {
       if (isFolder(value)) {
-        const openChild = () => {
-          [...panel.children].filter(el => el.classList?.contains('asc-level')).forEach(el => el.remove());
-          const next = document.createElement('div');
-          next.className = 'asc-popup asc-level';
-          panel.appendChild(next);
-          renderCommandTree(next, [...path, name]);
-        };
-        const item = addMenuItem(panel, '📁 ' + name, openChild);
+        const item = addMenuItem(panel, '📁 ' + name, () => openFolder(panel, path, name, item));
         item.setAttribute('aria-haspopup', 'true');
-        item.addEventListener('pointerenter', openChild);
-        item.addEventListener('focus', openChild);
+        item.addEventListener('pointerenter', () => openFolder(panel, path, name, item));
+        item.addEventListener('focus', () => openFolder(panel, path, name, item));
       } else if (typeof value === 'string') {
         addMenuItem(panel, name, () => {
           const ok = insertCommand(value);
