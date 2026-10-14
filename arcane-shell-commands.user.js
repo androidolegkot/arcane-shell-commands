@@ -124,8 +124,8 @@
     const trigger = document.createElement('button');
     trigger.id = 'asc-trigger';
     trigger.type = 'button';
-    trigger.textContent = 'Команды ▾';
-    trigger.title = 'Избранные команды';
+    trigger.textContent = 'Commands ▾';
+    trigger.title = 'Favorite commands';
     trigger.addEventListener('click', () => {
       if (!menu) buildMainMenu();
       menu.hidden = !menu.hidden;
@@ -179,12 +179,12 @@
   function buildMainMenu() {
     if (!menu) return;
     menu.replaceChildren();
-    addMenuItem(menu, 'Ввести', () => openCommandTree('insert'));
-    addMenuItem(menu, 'Выполнить', () => openCommandTree('execute'));
+    addMenuItem(menu, 'Insert', () => openCommandTree('insert'));
+    addMenuItem(menu, 'Execute', () => openCommandTree('execute'));
     const separator = document.createElement('div');
     separator.className = 'asc-separator';
     menu.appendChild(separator);
-    addMenuItem(menu, 'Редактировать', openEditor);
+    addMenuItem(menu, 'Edit', openEditor);
   }
 
   function getAtPath(path) {
@@ -208,7 +208,7 @@
     submenu.replaceChildren();
     const current = getAtPath(openPath);
     if (openPath.length) {
-      addMenuItem(submenu, '‹ Назад', () => {
+      addMenuItem(submenu, '‹ Back', () => {
         openPath.pop();
         renderCommandTree();
       }, 'asc-back');
@@ -220,7 +220,7 @@
     if (!isFolder(current) || Object.keys(current).length === 0) {
       const empty = document.createElement('div');
       empty.className = 'asc-item asc-back';
-      empty.textContent = 'Нет команд';
+      empty.textContent = 'No commands';
       submenu.appendChild(empty);
       return;
     }
@@ -235,7 +235,7 @@
         addMenuItem(submenu, '› ' + name, () => {
           const ok = insertCommand(value);
           if (!ok) {
-            alert('Не найдено поле ввода Shell.');
+            alert('Shell input field not found.');
             return;
           }
           if (activeMode === 'execute') sendEnter();
@@ -304,10 +304,10 @@
     const panel = document.createElement('section');
     panel.id = 'asc-editor';
     const heading = document.createElement('h3');
-    heading.textContent = 'Избранные команды';
+    heading.textContent = 'Favorite commands';
     const help = document.createElement('div');
     help.style.cssText = 'font-size:12px;color:var(--muted-foreground,#71717a)';
-    help.textContent = 'Папки — объекты, команды — строки. Изменения хранятся в этом браузере.';
+    help.textContent = 'Folders are objects and commands are strings. Changes are stored in this browser.';
     const textarea = document.createElement('textarea');
     textarea.id = 'asc-json';
     textarea.spellcheck = false;
@@ -318,24 +318,24 @@
 
     const cancel = document.createElement('button');
     cancel.type = 'button';
-    cancel.textContent = 'Отмена';
+    cancel.textContent = 'Cancel';
     cancel.addEventListener('click', closeEditor);
 
     const save = document.createElement('button');
     save.type = 'button';
     save.className = 'asc-save';
-    save.textContent = 'Сохранить';
+    save.textContent = 'Save';
     save.addEventListener('click', () => {
       try {
         const parsed = JSON.parse(textarea.value);
-        if (!isFolder(parsed)) throw new Error('Верхний уровень должен быть объектом {}.');
-        if (!validateTree(parsed)) throw new Error('Допустимы только папки-объекты и команды-строки.');
+        if (!isFolder(parsed)) throw new Error('The root value must be an object {}.');
+        if (!validateTree(parsed)) throw new Error('Only folder objects and command strings are allowed.');
         tree = parsed;
         saveTree();
         buildMainMenu();
         closeEditor();
       } catch (errorValue) {
-        error.textContent = errorValue.message || 'Некорректный JSON.';
+        error.textContent = errorValue.message || 'Invalid JSON.';
       }
     });
 
