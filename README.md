@@ -34,7 +34,7 @@ Folders are nested objects. A string value is a command; its key is the label sh
 }
 ```
 
-Hover over **Commands**, then hover over **Edit** to open the editor. Replace the JSON with your tree, then click **Save**. The sample commands above are examples only.
+Hover over **Commands**, then click **Edit** to open the editor. Replace the JSON with your tree, then click **Save**. The sample commands above are examples only.
 
 ## Adapt to another panel
 
