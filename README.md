@@ -1,13 +1,13 @@
 # Arcane Shell Commands
 
-Tampermonkey userscript that adds a small **Команды** menu to the Arcane container Shell page.
+Tampermonkey userscript that adds a **Commands** menu to the Arcane container Shell page.
 
 ## Features
 
-- **Ввести** — put a saved command into the Shell input without executing it.
-- **Выполнить** — put a saved command into the Shell input and send Enter.
-- **Редактировать** — edit the folders and commands as JSON.
-- Nested folders and commands.
+- **Insert** — put a saved command into the Shell input without executing it.
+- **Execute** — put a saved command into the Shell input and send Enter.
+- **Edit** — edit the folder and command tree as JSON.
+- Supports nested folders and commands.
 - Stores the command tree in this browser's `localStorage`; no server or external dependencies.
 
 ## Install
@@ -33,11 +33,11 @@ Folders are nested objects. A string value is a command; its key is the label sh
 }
 ```
 
-Use **Команды → Редактировать**, replace the JSON with your tree, then click **Сохранить**. The sample commands above are examples only.
+Use **Commands → Edit**, replace the JSON with your tree, then click **Save**. The sample commands above are examples only.
 
 ## Adapt to another panel
 
-The script is intentionally plain JavaScript and does not depend on Svelte, React, or xterm.js APIs. To adapt it, edit the `SELECTORS` object near the top of the userscript:
+The script is plain JavaScript and does not depend on Svelte, React, or xterm.js APIs. To adapt it, edit the `SELECTORS` object near the top of the userscript:
 
 - `shellInput` — the textarea used for terminal input.
 - `insertBefore` — the control beside which the menu button is inserted.
@@ -47,4 +47,4 @@ The tested Arcane input is `textarea.xterm-helper-textarea`. The script also exp
 ## Notes
 
 - The script targets `http://localhost:3552/containers/*`. Change the Tampermonkey `@match` line if your Arcane instance uses a different host, port, or protocol.
-- The execute action uses a synthetic Enter `keydown`, confirmed to work in the tested Arcane setup. Other terminal panels may handle synthetic keyboard events differently.
+- The Execute action uses a synthetic Enter `keydown`, confirmed to work in the tested Arcane setup. Other terminal panels may handle synthetic keyboard events differently.
