@@ -134,10 +134,9 @@
     trigger.addEventListener('pointerenter', openMainMenu);
     trigger.addEventListener('focus', openMainMenu);
     trigger.addEventListener('click', openMainMenu);
-    root.addEventListener('pointerleave', event => {
-      if (!root.contains(event.relatedTarget)) scheduleClose();
-    });
-    root.addEventListener('pointerenter', cancelScheduledClose);
+    // Do not close on pointerleave: cascading panels are positioned outside
+    // the root's box, and some browsers report the transition as leaving root.
+    // Outside click and Escape close the menus instead.
 
     menu = document.createElement('div');
     menu.className = 'asc-popup';
