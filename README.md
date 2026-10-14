@@ -7,6 +7,7 @@ Tampermonkey userscript that adds a **Commands** menu to the Arcane container Sh
 - **Insert** — put a saved command into the Shell input without executing it.
 - **Execute** — put a saved command into the Shell input and send Enter.
 - **Edit** — edit the folder and command tree as JSON.
+- Opens on hover, with cascading submenus that do not require clicks to navigate folders.
 - Supports nested folders and commands.
 - Stores the command tree in this browser's `localStorage`; no server or external dependencies.
 
@@ -33,7 +34,7 @@ Folders are nested objects. A string value is a command; its key is the label sh
 }
 ```
 
-Use **Commands → Edit**, replace the JSON with your tree, then click **Save**. The sample commands above are examples only.
+Hover over **Commands**, then hover over **Edit** to open the editor. Replace the JSON with your tree, then click **Save**. The sample commands above are examples only.
 
 ## Adapt to another panel
 
