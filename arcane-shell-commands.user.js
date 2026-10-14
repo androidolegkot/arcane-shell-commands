@@ -151,7 +151,10 @@
   }
 
   function onOutsidePointer(event) {
-    if (root && !root.contains(event.target)) closeMenus();
+    if (!root) return;
+    // Cascading panels live under document.body, outside the root element.
+    if (root.contains(event.target) || event.target.closest?.('.asc-level')) return;
+    closeMenus();
   }
 
   function onGlobalKeydown(event) {
@@ -179,7 +182,7 @@
   }
 
   function clearSubmenus() {
-    root?.querySelectorAll('.asc-level').forEach(panel => panel.remove());
+    document.querySelectorAll('#' + ROOT_ID + ' .asc-level, .asc-level').forEach(panel => panel.remove());
     submenu = null;
   }
 
@@ -235,7 +238,7 @@
     const panel = document.createElement('div');
     panel.className = 'asc-popup asc-level';
     panel.hidden = false;
-    root.appendChild(panel);
+    document.body.appendChild(panel);
     submenu = panel;
     positionSubmenu(panel, anchor);
     renderCommandTree(panel, []);
@@ -246,14 +249,14 @@
     const child = document.createElement('div');
     child.className = 'asc-popup asc-level';
     child.hidden = false;
-    root.appendChild(child);
+    document.body.appendChild(child);
     submenu = child;
     positionSubmenu(child, anchor);
     renderCommandTree(child, [...path, name]);
   }
 
   function clearSubmenusAfter(panel) {
-    const panels = [...root.querySelectorAll('.asc-level')];
+    const panels = [...document.querySelectorAll('.asc-level')];
     const index = panels.indexOf(panel);
     panels.slice(index + 1).forEach(el => el.remove());
     submenu = panel;
