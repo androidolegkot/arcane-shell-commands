@@ -33,6 +33,7 @@
   let submenu;
   let activeMode = 'insert';
   let openPath = [];
+  let closeTimer = null;
 
   function loadTree() {
     try {
@@ -63,6 +64,10 @@
     style.id = STYLE_ID;
     style.textContent = `
       #${ROOT_ID} { position: relative; display: inline-flex; font: inherit; z-index: 1000; }
+      #${ROOT_ID} .asc-popup { position: absolute; top: calc(100% + 6px); left: 0; }
+      #${ROOT_ID} .asc-popup.asc-level { top: 0; left: calc(100% - 2px); }
+      #${ROOT_ID} .asc-item { white-space: nowrap; }
+      #${ROOT_ID} .asc-item[aria-haspopup="true"]::after { content: "›"; margin-left: auto; padding-left: 14px; }
       #${ROOT_ID} button { font: inherit; cursor: pointer; }
       #asc-trigger {
         height: 32px; padding: 0 10px; border: 1px solid var(--border, #d4d4d8);
@@ -126,23 +131,17 @@
     trigger.type = 'button';
     trigger.textContent = 'Commands ▾';
     trigger.title = 'Favorite commands';
-    trigger.addEventListener('click', () => {
-      if (!menu) buildMainMenu();
-      menu.hidden = !menu.hidden;
-      submenu.hidden = true;
-    });
+    trigger.addEventListener('pointerenter', openMainMenu);
+    trigger.addEventListener('focus', openMainMenu);
+    trigger.addEventListener('click', openMainMenu);
+    root.addEventListener('pointerleave', scheduleClose);
+    root.addEventListener('pointerenter', cancelScheduledClose);
 
     menu = document.createElement('div');
     menu.className = 'asc-popup';
     menu.hidden = true;
 
-    submenu = document.createElement('div');
-    submenu.className = 'asc-popup';
-    submenu.style.left = '0';
-    submenu.style.top = 'calc(100% + 6px)';
-    submenu.hidden = true;
-
-    root.append(trigger, menu, submenu);
+    root.append(trigger, menu);
     select.parentElement.insertBefore(root, select);
     document.addEventListener('pointerdown', onOutsidePointer);
     document.addEventListener('keydown', onGlobalKeydown);
@@ -161,9 +160,32 @@
     }
   }
 
+  function openMainMenu() {
+    cancelScheduledClose();
+    if (!menu) buildMainMenu();
+    menu.hidden = false;
+    clearSubmenus();
+  }
+
+  function scheduleClose() {
+    cancelScheduledClose();
+    closeTimer = setTimeout(closeMenus, 180);
+  }
+
+  function cancelScheduledClose() {
+    if (closeTimer !== null) clearTimeout(closeTimer);
+    closeTimer = null;
+  }
+
+  function clearSubmenus() {
+    root?.querySelectorAll('.asc-level').forEach(panel => panel.remove());
+    submenu = null;
+  }
+
   function closeMenus() {
+    cancelScheduledClose();
     if (menu) menu.hidden = true;
-    if (submenu) submenu.hidden = true;
+    clearSubmenus();
   }
 
   function addMenuItem(parent, label, onClick, extraClass = '') {
@@ -179,8 +201,12 @@
   function buildMainMenu() {
     if (!menu) return;
     menu.replaceChildren();
-    addMenuItem(menu, 'Insert', () => openCommandTree('insert'));
-    addMenuItem(menu, 'Execute', () => openCommandTree('execute'));
+    for (const [label, mode] of [['Insert', 'insert'], ['Execute', 'execute']]) {
+      const item = addMenuItem(menu, label, () => openCommandTree(mode));
+      item.setAttribute('aria-haspopup', 'true');
+      item.addEventListener('pointerenter', () => openCommandTree(mode));
+      item.addEventListener('focus', () => openCommandTree(mode));
+    }
     const separator = document.createElement('div');
     separator.className = 'asc-separator';
     menu.appendChild(separator);
@@ -198,41 +224,41 @@
 
   function openCommandTree(mode) {
     activeMode = mode;
-    openPath = [];
-    menu.hidden = true;
-    renderCommandTree();
-    submenu.hidden = false;
+    clearSubmenus();
+    const panel = document.createElement('div');
+    panel.className = 'asc-popup asc-level';
+    panel.hidden = false;
+    menu.appendChild(panel);
+    submenu = panel;
+    renderCommandTree(panel, []);
   }
 
-  function renderCommandTree() {
-    submenu.replaceChildren();
-    const current = getAtPath(openPath);
-    if (openPath.length) {
-      addMenuItem(submenu, '‹ Back', () => {
-        openPath.pop();
-        renderCommandTree();
-      }, 'asc-back');
-      const sep = document.createElement('div');
-      sep.className = 'asc-separator';
-      submenu.appendChild(sep);
-    }
-
+  function renderCommandTree(panel, path) {
+    panel.replaceChildren();
+    const current = getAtPath(path);
     if (!isFolder(current) || Object.keys(current).length === 0) {
       const empty = document.createElement('div');
       empty.className = 'asc-item asc-back';
       empty.textContent = 'No commands';
-      submenu.appendChild(empty);
+      panel.appendChild(empty);
       return;
     }
 
     for (const [name, value] of Object.entries(current)) {
       if (isFolder(value)) {
-        addMenuItem(submenu, '📁 ' + name + '  ›', () => {
-          openPath.push(name);
-          renderCommandTree();
-        });
+        const openChild = () => {
+          [...panel.children].filter(el => el.classList?.contains('asc-level')).forEach(el => el.remove());
+          const next = document.createElement('div');
+          next.className = 'asc-popup asc-level';
+          panel.appendChild(next);
+          renderCommandTree(next, [...path, name]);
+        };
+        const item = addMenuItem(panel, '📁 ' + name, openChild);
+        item.setAttribute('aria-haspopup', 'true');
+        item.addEventListener('pointerenter', openChild);
+        item.addEventListener('focus', openChild);
       } else if (typeof value === 'string') {
-        addMenuItem(submenu, '› ' + name, () => {
+        addMenuItem(panel, name, () => {
           const ok = insertCommand(value);
           if (!ok) {
             alert('Shell input field not found.');
