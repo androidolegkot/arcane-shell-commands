@@ -65,7 +65,7 @@
     style.textContent = `
       #${ROOT_ID} { position: relative; display: inline-flex; font: inherit; z-index: 1000; }
       #${ROOT_ID} .asc-popup { position: absolute; top: calc(100% + 6px); left: 0; }
-      #${ROOT_ID} .asc-popup.asc-level { position: fixed; top: 0; left: 0; max-height: 65vh; }
+      .asc-popup.asc-level { position: fixed; top: 0; left: 0; max-height: 65vh; }
       #${ROOT_ID} .asc-item { white-space: nowrap; }
       #${ROOT_ID} .asc-item[aria-haspopup="true"]::after { content: "›"; margin-left: auto; padding-left: 14px; }
       #${ROOT_ID} button { font: inherit; cursor: pointer; }
@@ -228,8 +228,23 @@
 
   function positionSubmenu(panel, anchor) {
     const rect = anchor.getBoundingClientRect();
-    panel.style.left = Math.min(rect.right - 2, window.innerWidth - 210) + 'px';
-    panel.style.top = Math.max(4, Math.min(rect.top, window.innerHeight - 100)) + 'px';
+    const width = panel.getBoundingClientRect().width;
+    const height = panel.getBoundingClientRect().height;
+    const gap = 4;
+
+    // Prefer opening to the right; flip left when there isn't enough room.
+    let left = rect.right - 2;
+    if (left + width > window.innerWidth - gap) {
+      left = rect.left - width + 2;
+    }
+    left = Math.max(gap, Math.min(left, window.innerWidth - width - gap));
+
+    // Keep the full panel inside the viewport vertically too.
+    let top = rect.top;
+    top = Math.max(gap, Math.min(top, window.innerHeight - height - gap));
+
+    panel.style.left = left + 'px';
+    panel.style.top = top + 'px';
   }
 
   function openCommandTree(mode, anchor) {
@@ -240,8 +255,8 @@
     panel.hidden = false;
     document.body.appendChild(panel);
     submenu = panel;
-    positionSubmenu(panel, anchor);
     renderCommandTree(panel, []);
+    positionSubmenu(panel, anchor);
   }
 
   function openFolder(panel, path, name, anchor) {
@@ -251,8 +266,8 @@
     child.hidden = false;
     document.body.appendChild(child);
     submenu = child;
-    positionSubmenu(child, anchor);
     renderCommandTree(child, [...path, name]);
+    positionSubmenu(child, anchor);
   }
 
   function clearSubmenusAfter(panel) {
